@@ -78,25 +78,9 @@ def run_pipeline(
             registered_model_name=register_model_name
         )
 
-        # Optional: log feature importance
-        try:
-            importances = model.estimators_[0].feature_importances_
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.bar(range(len(importances)), importances)
-            ax.set_title("Feature Importance (t+1 estimator)")
-            mlflow.log_figure(fig, "feature_importance_t+1.png")
-            plt.close(fig)
-        except Exception as e:
-            print(f"Could not plot feature importance: {e}")
-
         # Evaluate using MLflow's evaluator (only on t+1 step)
-        mlflow.models.evaluate(
-            model=model_info.model_uri,
-            data=evaluation_data,
-            targets="label",
-            model_type="classifier",
-            evaluator_config={"metric_prefix": "mlflow_eval_"}
-        )
+        for i in range(y_test.shape[1]):
+            mlflow.log_metric(f"accuracy_step_{i+1}", np.mean(y_test[:, i] == y_pred[:, i]))
 
         print(f"✅ Model logged and registered: {model_info.model_uri}")
 
